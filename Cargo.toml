@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+<<<<<<< HEAD
+=======
+serde_json = "1.0"
+quick_xml = "0.4"
+>>>>>>> master

@@ -38,11 +38,26 @@ impl FileReader {
 
         for (index, line) in reader.lines().enumerate() {
             let line = line?;
-            let fields: Vec<&str> = line.split(',').collect();
-            println!("Row {}: {:?}", index + 1, fields);
+            let fields: Vec<&str> = line.split(',').map(|s| s.trim().to_string()).collect();
+
+            if index == 0 {
+                headers = fields;
+                for header in &headers {
+                    dataframe.add_column(header.clone(), Vec::new());
+                }
+            }else {
+                for (i, field) in fields.iter().enumerate() {
+                    if let Some(header) = headers.get(i) {
+                        if let Some(column) = dataframe.columns.get_mut(header) {
+                            column.push(field.clone());
+                        }
+                    }
+                }
+            }
+            
         }
 
-        Ok(())
+        Ok((dataframe))
     }
 
     pub fn read_json(&self) -> io::Result<()> {

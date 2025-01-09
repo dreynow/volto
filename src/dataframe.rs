@@ -1,11 +1,10 @@
-use std::fs::File;
 use std::collections::HashMap;
 
-pub struct Dataframe {
-    columns: HashMap<String, Vec<String>>,
+pub struct DataFrame {
+    pub columns: HashMap<String, Vec<String>>,
 }
 
-impl Dataframe {
+impl DataFrame {
     pub fn new() -> Self {
         Self {
             columns: HashMap::new(),
@@ -17,6 +16,13 @@ impl Dataframe {
     }
 
     pub fn select_column(&self, column_name: &str) -> Option<&Vec<String>> {
-        self.column.get(column_name)
+        self.columns.get(column_name)
+    }
+
+    pub fn display(&self) {
+        for (name,values) in &self.columns {
+            println!("Column: {}", name);
+            println!("Values: {:?}", values);
+        }
     }
 }

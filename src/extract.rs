@@ -14,6 +14,7 @@ pub struct FileReader {
     file_path: String,
 }
 
+
 impl FileReader {
     pub fn new(file_path: &str) -> Self {
         Self {
@@ -21,7 +22,7 @@ impl FileReader {
         }
     }
 
-    pub fn reader(&self, file_type: FileType) -> io::Result<()> {
+    pub fn reader(&self, file_type: FileType) -> io::Result<(DataFrame)> {
         match file_type {
             FileType::Csv => self.read_csv(),
             FileType::Json => self.read_json(),
@@ -38,12 +39,12 @@ impl FileReader {
 
         for (index, line) in reader.lines().enumerate() {
             let line = line?;
-            let fields: Vec<&str> = line.split(',').map(|s| s.trim().to_string()).collect();
+            let fields: Vec<String> = line.split(',').map(|s| s.trim().to_string()).collect();
 
             if index == 0 {
                 headers = fields;
                 for header in &headers {
-                    dataframe.add_column(header.clone(), Vec::new());
+                    dataframe.add_column(&header.clone(), Vec::new());
                 }
             }else {
                 for (i, field) in fields.iter().enumerate() {

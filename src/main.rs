@@ -1,14 +1,17 @@
 mod extract;
 mod transform;
 mod load;
+mod dataframe;
 
-use crate::extract::{FileReader, FileType};
+use extract::FileReader;
+
 
 fn main() -> std::io::Result<()> {
     let file_reader = FileReader::new("sample.csv");
 
-    if let Err(e) = file_reader.reader(FileType::Csv) {
-        eprintln!("Error reading file: {}", e);
+    match file_reader.read_csv() {
+        Ok(dataframe) => dataframe.display(),
+        Err(e) => eprintln!("Error reading CSV file: {}", e),
     }
 
     Ok(())

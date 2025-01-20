@@ -3,6 +3,8 @@ mod transform;
 mod load;
 mod dataframe;
 
+mod errors;
+
 use extract::FileReader;
 
 

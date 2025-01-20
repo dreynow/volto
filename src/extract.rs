@@ -1,13 +1,13 @@
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read};
 use serde_json::Value;
-use crate::dataframe::DataFrame;
+use crate::dataframe::{self, DataFrame};
+use crate::errors::FileReaderError;
 
 #[derive(Debug)]
 pub enum FileType {
     Csv,
     Json,
-    Binary,
 }
 
 pub struct FileReader {
@@ -26,7 +26,6 @@ impl FileReader {
         match file_type {
             FileType::Csv => self.read_csv(),
             FileType::Json => self.read_json(),
-            FileType::Binary => self.read_binary(),
         }
     }
 
@@ -38,7 +37,7 @@ impl FileReader {
         let mut headers: Vec<String> = Vec::new();
 
         for (index, line) in reader.lines().enumerate() {
-            let line = line?;
+            let line = line.map_err(FileReaderError::IoError)?;
             let fields: Vec<String> = line.split(',').map(|s| s.trim().to_string()).collect();
 
             if index == 0 {
@@ -61,28 +60,82 @@ impl FileReader {
         Ok((dataframe))
     }
 
-    pub fn read_json(&self) -> io::Result<()> {
-        let mut file = File::open(&self.file_path)?;
+    pub fn read_json(&self) -> io::Result<(DataFrame)> {
+        let mut file = File::open(&self.file_path).map_err(FileReaderError::IoError)?;
         let mut content = String::new();
-        file.read_to_string(&mut content)?;
+        file.read_to_string(&mut content).map_err(FileReaderError::IoError)?;
 
-        let json: Value = match serde_json::from_str(&content) {
-            Ok(parsed) => parsed,
-            Err(e) => return Err(io::Error::new(io::ErrorKind::InvalidData, e)),
-        };
-        println!("Parsed JSON: {:?}", json);
+        let json: Value = serde_json::from_str(&content)
+            .map_err(|e| FileReaderError::JsonParseError(e.to_string()))?;
 
-        Ok(())
+        let mut dataframe = DataFrame::new();
+
+        match json {
+            // Case 1: Array of objects
+            Value::Array(rows) => {
+                if rows.is_empty() {
+                    return Err(FileReaderError::EmptyJsonarray);
+                }
+
+                if let Some(Value::Object(first_row)) = rows.get(0) {
+                    for key in first_row.keys() {
+                        dataframe.add_column(key, Vec::new());
+                    }
+                } else {
+                    return Err(FileReaderError::InvalidJsonStructure("JSON array does not contain objects".to_string()));
+                }
+                
+
+                // Populates rows
+                for row in rows {
+                    if let Value::Object(row_map) = row {
+                        for (key, value) in row_map {
+                            if let Some(column) = dataframe.columns.get_mut(&key) {
+                                column.push(value_to_string(&value));
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Case 2: Object with arrays
+            Value::Object(columns) => {
+                for (key,value) in &columns {
+                    if let Value::Array(values) = value {
+                        dataframe.add_column(key, values.iter().map(value_to_string).collect());
+                    } else {
+                        return Err(FileReaderError::InvalidJsonStructure(format!("Value for '{}' is not an array.", key)));
+                    }
+                }
+
+
+                // validate array lengths
+                let lengths: Vec<usize> = dataframe.columns.values().map(|col| col.len()).collect();
+                if lengths.iter().any(|&len| len != lengths[0]) {
+                    return Err(FileReaderError::InconsistentArrayLengths);
+                }
+            }
+
+            // Unsupported structure
+            _ => {
+                return Err(FileReaderError::UnsupportedJsonStructure);
+            }
+        }
+
+        
+
+        fn value_to_string(value: &Value) -> String {
+            match value {
+                Value::Null => "null".to_string(),
+                Value::Bool(b) => b.to_string(),
+                Value::Number(n) => n.to_string(),
+                Value::String(s) => s.clone(),
+                _=> format!("{:?}",value),
+            }
+        }
+
+        Ok(dataframe)
     }
 
-    pub fn read_binary(&self) -> io::Result<()> {
-        let file = File::open(&self.file_path)?;
-        let mut reader = BufReader::new(file);
-        let mut buffer = Vec::new();
 
-        reader.read_to_end(&mut buffer)?;
-        println!("Read {} bytes from the binary file.", buffer.len());
-
-        Ok(())
-    }
 }

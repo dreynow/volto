@@ -74,7 +74,7 @@ impl FileReader {
             // Case 1: Array of objects
             Value::Array(rows) => {
                 if rows.is_empty() {
-                    return Err(FileReaderError::EmptyJsonarray);
+                    return Err(FileReaderError::EmptyJsonArray);
                 }
 
                 if let Some(Value::Object(first_row)) = rows.get(0) {

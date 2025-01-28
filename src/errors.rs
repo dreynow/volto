@@ -1,14 +1,29 @@
 use std::fmt;
 use std::error::Error;
+use thiserror::Error;
 
 #[derive(Debug)]
 pub enum FileReaderError {
-    IoError(std::io::Error),
+    #[error("I/O Error: {0}")]
+    IoError(#[from] io::Error),
+
+    #[error("JSON Parse Error: {0}")]
     JsonParseError(String),
+
+    #[error("JSON array is empty")]
     EmptyJsonArray,
+
+    #[error("Invalid JSON structure: {0}")]
     InvalidJsonStructure(String),
+
+    #[error("Inconsistent array lengths in JSON")]
     InconsistentArrayLengths,
+
+    #[error("Unsupported JSON structure")]
     UnsupportedJsonStructure,
+
+    #[error("Excel Error: {0}")]
+    ExcelError(String),
 }
 
 impl fmt::Display for FileReaderError {
@@ -22,6 +37,7 @@ impl fmt::Display for FileReaderError {
                 write!(f, "Inconsistent array lengths in JSON")
             }
             FileReaderError::UnsupportedJsonStructure => write!(f, "Unsupported JSON structure"),
+            FileReaderError::ExcelError(msg) => write!(f, "Excel Error: {}", msg),
         }
     }
 }

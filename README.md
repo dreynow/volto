@@ -38,4 +38,4 @@ If you'd like to contribute to the development of Volto, feel free to fork the r
 
 ## License
 
-Volto is licensed under the MIT License. See the [LICENSE](https://github.com/thenameisdrey/volto/blob/main/LICENSE) file for more details.
+Volto is licensed under the MIT License. See the [LICENSE](https://github.com/dreynow/volto/blob/main/LICENSE) file for more details.

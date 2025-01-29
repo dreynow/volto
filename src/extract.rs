@@ -24,6 +24,10 @@ impl FileReader {
         }
     }
 
+    pub fn extract(&self, file_type: FileType) -> Result<DataFrame, FileReaderError> {
+        self.reader(file_type)
+    }
+
     pub fn reader(&self, file_type: FileType) -> Result<DataFrame, FileReaderError> {
         match file_type {
             FileType::Csv => self.read_csv(),

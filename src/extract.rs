@@ -36,7 +36,7 @@ impl FileReader {
         }
     }
 
-    pub read_excel(&self) -> Result<DataFrame, FileReaderError> {
+    pub fn read_excel(&self) -> Result<DataFrame, FileReaderError> {
         let file = open_workbook_auto(&self.file_path)
             .map_err(|e| FileReaderError::ExcelError(e.to_string()))?;
 
